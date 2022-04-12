@@ -12,7 +12,7 @@ go get github.com/ssrathi/go-scrub
 ```
 
 ## Usage
-```
+```go
   // Have a struct with some sensitive fields.
   T := testScrub{
      username: "administrator",
