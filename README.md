@@ -17,14 +17,14 @@ go install github.com/ssrathi/go-scrub@latest
 
   // Have a struct with some sensitive fields.
   type testScrub struct {
-    string username
-    string Password
-    string []codes
+    Username string
+    Password string
+    Codes    []string
   }
 
   // Create a struct with some sensitive data.
   T := testScrub{
-     username: "administrator",
+     Username: "administrator",
      Password: "my_secret_passphrase",
      Codes:    []string{"pass1", "pass2", "pass3"},
   }
@@ -36,11 +36,11 @@ go install github.com/ssrathi/go-scrub@latest
   }
 
   // Call the util API to get a JSON formatted string with scrubbed field values.
-  out := scrub.Scrub(&T, fieldsToScrub, "test-redact")
+  out := scrub.Scrub(&T, fieldsToScrub)
 
   // Log the scrubbed string without worrying about prying eyes!
   log.Println(out)
-  OUTPUT: {username:administrator Password:******** Codes:[******** ******** ********]}
+  OUTPUT: {"Username":"administrator","Password":"********","Codes":["********","********","********"]}
 ```
 
 ## Contributing
