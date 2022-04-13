@@ -8,12 +8,21 @@ A scrubbing utility in Golang to hide sensitive fields from a struct prior to lo
 
 ## Installation
 ```
-go get github.com/ssrathi/go-scrub
+go install github.com/ssrathi/go-scrub@latest
 ```
 
 ## Usage
 ```go
+  import "github.com/ssrathi/go-scrub"
+
   // Have a struct with some sensitive fields.
+  type testScrub struct {
+    string username
+    string Password
+    string []codes
+  }
+
+  // Create a struct with some sensitive data.
   T := testScrub{
      username: "administrator",
      Password: "my_secret_passphrase",
@@ -27,7 +36,7 @@ go get github.com/ssrathi/go-scrub
   }
 
   // Call the util API to get a JSON formatted string with scrubbed field values.
-  out := Scrub(&T, fieldsToScrub, "test-redact")
+  out := scrub.Scrub(&T, fieldsToScrub, "test-redact")
 
   // Log the scrubbed string without worrying about prying eyes!
   log.Println(out)
