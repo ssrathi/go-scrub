@@ -12,10 +12,10 @@
 //
 // Notes & Caveates
 //
-// * Only exported fields of a struct can be redacted (fields starting with a
-//   capital letter). Reflect package cannot modify unexported (private) fields.
-// * The input struct must be passed by its address, otherwise the values of its
-//   fields cannot be changed.
+// - Only exported fields of a struct can be scrubbed (fields starting with a
+// capital letter). Reflect package cannot modify unexported (private) fields.
+// - The input struct must be passed by its address, otherwise the values of its
+// fields cannot be changed.
 //
 // Example
 //
@@ -27,7 +27,7 @@
 //
 //    fieldsToScrub := map[string]bool{"password": true, "codes": true}
 //
-//    out := Scrub(&T, fieldsToScrub, "test-redact")
+//    out := Scrub(&T, fieldsToScrub)
 //    log.Println(out)
 //    OUTPUT: {username:administrator Password:******** Codes:[******** ******** ********]}
 package scrub
@@ -44,7 +44,7 @@ var DefaultToScrub = map[string]bool{
 	"password": true,
 }
 
-// Scrub redacts all the specified string fields in the 'input' struct
+// Scrub scrubs all the specified string fields in the 'input' struct
 // at any level recursively and returns a JSON-formatted string of the
 // scrubbed struct.
 func Scrub(input interface{}, fieldsToScrub map[string]bool) string {
@@ -73,7 +73,7 @@ func Scrub(input interface{}, fieldsToScrub map[string]bool) string {
 }
 
 // scrubInternal scrubs all the specified string fields in the 'input' struct
-// at any level recursively and returns a JSON formatted string of the redacted struct.
+// at any level recursively and returns a JSON formatted string of the scrubbed struct.
 // It restores the struct back to the original values before returning.
 //
 // It loops over the given 'target' struct recursively, looking for 'string'
@@ -128,13 +128,13 @@ func scrubInternal(target interface{}, fieldName string, fieldsToScrub map[strin
 			}
 
 			if !fValue.CanAddr() {
-				// Cannot take pointer of this field, so can't redact it.
+				// Cannot take pointer of this field, so can't scrub it.
 				continue
 			}
 
 			if !fValue.Addr().CanInterface() {
 				// This is an unexported or private field (begins with lowercase).
-				// We can't take an interface on that or redact it.
+				// We can't take an interface on that or scrub it.
 				// UnsafeAddr(), which is unsafe.Pointer, can be used to workaround it,
 				// but that is not recommended in Golang.
 				continue
@@ -155,13 +155,13 @@ func scrubInternal(target interface{}, fieldName string, fieldsToScrub map[strin
 			}
 
 			if !arrValue.CanAddr() {
-				// Cannot take pointer of this field, so can't redact it.
+				// Cannot take pointer of this field, so can't scrub it.
 				continue
 			}
 
 			if !arrValue.Addr().CanInterface() {
 				// This is an unexported or private field (begins with lowercase).
-				// We can't take an interface on that or redact it.
+				// We can't take an interface on that or scrub it.
 				// UnsafeAddr(), which is unsafe.Pointer, can be used to workaround it,
 				// but that is not recommended in Golang.
 				continue
@@ -182,7 +182,7 @@ func scrubInternal(target interface{}, fieldName string, fieldsToScrub map[strin
 	}
 
 	if _, ok := fieldsToScrub[strings.ToLower(fieldName)]; ok {
-		// Redact this string value. Other types are not redacted.
+		// Scrub this string value. Other types are not scrubbed.
 		if targetValue.CanSet() && targetValue.Kind() == reflect.String && !targetValue.IsZero() {
 			if mask {
 				// Save the value, so that it can be restored later.
