@@ -39,8 +39,8 @@ jobs:
     - name: Lint
       run: |
         export PATH=$PATH:$(go env GOPATH)/bin
-        go get -u golang.org/x/lint/golint
-        $(go env GOPATH)/bin/golint -set_exit_status ./...
+        go install golang.org/x/lint/golint@latest
+        golint -set_exit_status ./...
 
     - name: Vet
       run: go vet ./...
