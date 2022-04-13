@@ -12,10 +12,10 @@
 //
 // Notes & Caveates
 //
-// - Only exported fields of a struct can be scrubbed (fields starting with a
+// Only exported fields of a struct can be scrubbed (fields starting with a
 // capital letter). Reflect package cannot modify unexported (private) fields.
-// - The input struct must be passed by its address, otherwise the values of its
-// fields cannot be changed.
+// Also, The input struct must be passed by its address, otherwise the values
+// of its fields cannot be changed.
 //
 // Example
 //
