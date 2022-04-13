@@ -89,12 +89,12 @@ func Scrub(input interface{}, fieldsToScrub map[string]bool) string {
 // NOTE: 'savedValues' must be preserved by the caller to restore the original struct
 // and must not be modified.
 //
-// This is an internal API. It should not be used direclty by any caller.
+// This is an internal API. It should not be used directly by any caller.
 func scrubInternal(target interface{}, fieldName string, fieldsToScrub map[string]bool,
 	savedValues *[]string, mask bool) {
 
 	// if target is not pointer, then immediately return
-	// modifying struct's field requires addresable object
+	// modifying struct's field requires addressable object
 	addrValue := reflect.ValueOf(target)
 	if addrValue.Kind() != reflect.Ptr {
 		return
