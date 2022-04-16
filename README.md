@@ -6,6 +6,8 @@
 
 A scrubbing utility in Golang to hide sensitive fields from a struct prior to logging.
 
+Since the scrubbing utility function needs to work on any Golang struct where its fields and members are known only at runtime, we can leverage ["reflect"](https://pkg.go.dev/reflect), a powerful package from the Golang standard library, to scrub sensitive fields at any level of a deeply nested structure recursively.
+
 ## Installation
 ```
 go install github.com/ssrathi/go-scrub@latest
