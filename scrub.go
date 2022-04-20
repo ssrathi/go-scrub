@@ -20,7 +20,7 @@
 // Example
 //
 //    T := testScrub{
-//       username: "administrator",
+//       Username: "administrator",
 //       Password: "my_secret_passphrase",
 //       Codes:    []string{"pass1", "pass2", "pass3"},
 //    }
