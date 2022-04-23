@@ -2,6 +2,7 @@
  * Copyright (c) 2022 Nutanix Inc. All rights reserved.
  *
  * Author: Shyamsunder Rathi - shyam.rathi@nutanix.com
+ * MIT License
  */
 
 // Package scrub implements a scrubbing utility to hide sensitive fields from a struct.
