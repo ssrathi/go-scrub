@@ -5,6 +5,8 @@
  * MIT License
  */
 
+// Forked version initiated by @grandeto
+//
 // Package scrub implements a scrubbing utility to hide sensitive fields from a struct.
 //
 // This utility can be used to purge sensitive fields from a deeply nested struct
@@ -20,79 +22,148 @@
 //
 // Example
 //
-//    T := testScrub{
+//    type testScrub struct {
+//    	 Username string
+//    	 Password string
+//    	 Codes    []string
+//    }
+//
+//    T := &testScrub{
 //       Username: "administrator",
 //       Password: "my_secret_passphrase",
 //       Codes:    []string{"pass1", "pass2", "pass3"},
 //    }
 //
-//    fieldsToScrub := map[string]bool{"password": true, "codes": true}
+//    emptyT := &testScrub{}
 //
-//    out := Scrub(&T, fieldsToScrub)
+//    fieldsToScrub := map[string]map[string]string{
+//       "password": make(map[string]string),
+//       "codes": make(map[string]string),
+//    }
+//
+//    func ScrubSetup() {
+//       fieldsToScrub["password"]["symbol"] = "*"
+//       fieldsToScrub["codes"]["symbol"] = "."
+//       MaskLenVary = true
+//    }
+//
+//    ScrubSetup()
+//
+//    out := Scrub(emptyT, T, fieldsToScrub, JsonScrub)
 //    log.Println(out)
-//    OUTPUT: {username:administrator Password:******** Codes:[******** ******** ********]}
+//    OUTPUT: {username:administrator Password:******************** Codes:[..... ..... .....]}
 package scrub
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"reflect"
 	"strings"
 )
 
-// DefaultToScrub contains default field names to scrub.
-// NOTE: these fields should be all lowercase. Comparison is case insensitive.
-var DefaultToScrub = map[string]bool{
-	"password": true,
-}
+var (
+	// DefaultToScrub contains default field names to scrub.
+	// NOTE: these fields should be all lowercase. Comparison is case insensitive.
+	DefaultToScrub = map[string]map[string]string{
+		"password": make(map[string]string),
+	}
+	// Specifies mask length equals DefaultMaskLen or mask length equals to value length
+	MaskLenVary    = false
+	DefaultMaskLen = 8
+)
 
-// Scrub scrubs all the specified string fields in the 'input' struct
-// at any level recursively and returns a JSON-formatted string of the
-// scrubbed struct.
-func Scrub(input interface{}, fieldsToScrub map[string]bool) string {
-	if input == nil {
-		// Return json representation of 'nil' input
+// StructDataType specifies supported formats
+type ScrubDataType string
+
+const (
+	XmlScrub  ScrubDataType = "xml"
+	JsonScrub ScrubDataType = "json"
+)
+
+// Scrub scrubs all the specified string fields in the 'target' struct
+// at any level recursively and returns a ScrubDataType formatted string of the scrubbed struct.
+//
+// A pointer to a new empty instance of the 'target' struct is needed
+// to act as a 'cloning' of the 'target' to avoid race conditions
+func Scrub(cloning interface{}, target interface{}, fieldsToScrub  map[string]map[string]string, dataType ScrubDataType) string {
+	if invalidInput(cloning, target) {
+		switch dataType {
+		case JsonScrub:
+			// Return json representation of 'nil' input
+			return "null"
+		case XmlScrub:
+			// Return xml representation of 'nil' input
+			return ""
+		default:
+			// Return json representation of 'nil' input
+			return "null"
+		}
+	}
+
+	// Clone target struct to avoid race conditions
+	switch dataType {
+	case JsonScrub:
+		if b, err := json.Marshal(target); err != nil {
+			return "null"
+		} else {
+
+			if err = json.Unmarshal(b, cloning); err != nil {
+				return "null"
+			}
+
+		}
+	case XmlScrub:
+		if b, err := xml.MarshalIndent(target, "  ", "    "); err != nil {
+			return ""
+		} else {
+
+			if err = xml.Unmarshal(b, cloning); err != nil {
+				return ""
+			}
+
+		}
+	default:
 		return "null"
 	}
 
+	// Set default fields to scrub
 	if fieldsToScrub == nil {
 		fieldsToScrub = DefaultToScrub
+		fieldsToScrub["password"]["symbol"] = "*"
 	}
 
 	// Call a recursive function to find and scrub fields in input at any level.
-	savedValues := make([]string, 0)
-	scrubInternal(input, "", fieldsToScrub, &savedValues, true /* mask */)
+	scrubInternal(cloning, "", fieldsToScrub)
 
-	// Get a JSON marshalled string from the scrubb string to return.
-	var b []byte
-	b, _ = json.Marshal(input)
-
-	// Restore all the scrubbed values back to the original values in the struct.
-	scrubInternal(input, "", fieldsToScrub, &savedValues, false /* unmask */)
-
-	// Return the scrubbed string
-	return string(b)
+	// Get the marshalled string from the scrubb string and return the scrubbed string.
+	switch dataType {
+	case JsonScrub:
+		if b, err := json.Marshal(cloning); err != nil {
+			return "null"
+		} else {
+			return string(b)
+		}
+	case XmlScrub:
+		if b, err := xml.MarshalIndent(cloning, "  ", "    "); err != nil {
+			return ""
+		} else {
+			return string(b)
+		}
+	default:
+		return ""
+	}
 }
 
-// scrubInternal scrubs all the specified string fields in the 'input' struct
-// at any level recursively and returns a JSON formatted string of the scrubbed struct.
-// It restores the struct back to the original values before returning.
+// scrubInternal scrubs all the specified string fields in the 'target' struct
+// at any level recursively and returns a ScrubDataType formatted string of the scrubbed struct.
 //
 // It loops over the given 'target' struct recursively, looking for 'string'
-// field names specified in 'fieldsToScrub'. If found, it saves the value in
-// 'savedValues' and scrubs the value with '********'.
-// If 'mask' is set to false, then it reverses the operation by replacing all masked
-// fields with the original value saved in 'savedValues'.
-//
-// A typical usage is to call this API with an empty 'savedValues' with 'mask' as true to
-// scrub all sensitive values in the struct. Afterwards, call it back with the filled
-// 'savedValues' with 'mask' as false to restore the original struct.
-//
-// NOTE: 'savedValues' must be preserved by the caller to restore the original struct
-// and must not be modified.
+// field names specified in 'fieldsToScrub'. If found, it scrubs the value
+// with the given symbol defined in 'fieldsToScrub'
+// Depending on the MaskLenVary option scrub length can be fixed or vary.
 //
 // This is an internal API. It should not be used directly by any caller.
-func scrubInternal(target interface{}, fieldName string, fieldsToScrub map[string]bool,
-	savedValues *[]string, mask bool) {
+func scrubInternal(target interface{}, fieldName string, fieldsToScrub  map[string]map[string]string) {
 
 	// if target is not pointer, then immediately return
 	// modifying struct's field requires addressable object
@@ -141,8 +212,7 @@ func scrubInternal(target interface{}, fieldName string, fieldsToScrub map[strin
 				continue
 			}
 
-			scrubInternal(fValue.Addr().Interface(), fType.Name, fieldsToScrub,
-				savedValues, mask)
+			scrubInternal(fValue.Addr().Interface(), fType.Name, fieldsToScrub)
 		}
 		return
 	}
@@ -168,8 +238,7 @@ func scrubInternal(target interface{}, fieldName string, fieldsToScrub map[strin
 				continue
 			}
 
-			scrubInternal(arrValue.Addr().Interface(), fieldName, fieldsToScrub,
-				savedValues, mask)
+			scrubInternal(arrValue.Addr().Interface(), fieldName, fieldsToScrub)
 		}
 
 		return
@@ -182,18 +251,33 @@ func scrubInternal(target interface{}, fieldName string, fieldsToScrub map[strin
 		return
 	}
 
-	if _, ok := fieldsToScrub[strings.ToLower(fieldName)]; ok {
+	if opts, ok := fieldsToScrub[strings.ToLower(fieldName)]; ok {
 		// Scrub this string value. Other types are not scrubbed.
 		if targetValue.CanSet() && targetValue.Kind() == reflect.String && !targetValue.IsZero() {
-			if mask {
-				// Save the value, so that it can be restored later.
-				*savedValues = append(*savedValues, targetValue.String())
-				targetValue.SetString("********")
+			var symbol string
+
+			if v, ok := opts["symbol"]; ok {
+				symbol = v
 			} else {
-				// Restore from the saved value.
-				targetValue.SetString((*savedValues)[0])
-				*savedValues = (*savedValues)[1:]
+				// Fallback to default symbol *
+				symbol = "*"
 			}
+
+			var mask string
+			if MaskLenVary {
+				// Mask symbols' length equals to value length
+				mask = strings.Repeat(symbol, targetValue.Len())
+			} else {
+				// Use default mask symbols' length
+				mask = strings.Repeat(symbol, DefaultMaskLen)
+			}
+
+			targetValue.SetString(mask)
 		}
 	}
+}
+
+// Validate target pointers
+func invalidInput(cloning interface{}, target interface{}) bool {
+	return cloning == nil || target == nil || reflect.ValueOf(cloning).IsZero() || reflect.ValueOf(target).IsZero()
 }
