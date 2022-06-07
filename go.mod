@@ -1,4 +1,4 @@
-module github.com/ssrathi/go-scrub
+module github.com/grandeto/go-scrub
 
 go 1.18
 
