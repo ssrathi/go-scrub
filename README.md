@@ -43,7 +43,7 @@ go get github.com/grandeto/go-scrub@latest
    func ScrubSetup() {
       fieldsToScrub["password"]["symbol"] = "*"
       fieldsToScrub["codes"]["symbol"] = "."
-      MaskLenVary = true
+      scrub.MaskLenVary = true
    }
    ScrubSetup()
 

@@ -42,12 +42,12 @@
 //    func ScrubSetup() {
 //       fieldsToScrub["password"]["symbol"] = "*"
 //       fieldsToScrub["codes"]["symbol"] = "."
-//       MaskLenVary = true
+//       scrub.MaskLenVary = true
 //    }
 //
 //    ScrubSetup()
 //
-//    out := Scrub(emptyT, T, fieldsToScrub, JSONScrub)
+//    out := scrub.Scrub(emptyT, T, fieldsToScrub, JSONScrub)
 //    log.Println(out)
 //    OUTPUT: {username:administrator Password:******************** Codes:[..... ..... .....]}
 package scrub
