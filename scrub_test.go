@@ -42,7 +42,7 @@ func TestScrubSimpleFixedLenJson(t *testing.T) {
 		DbSecrets: []string{"db_secret_1", "db_secret_2"},
 	}
 
-	validateScrub(t, empty, user, userScrubbed, nil, JsonScrub)
+	validateScrub(t, empty, user, userScrubbed, nil, JSONScrub)
 }
 
 // Tests xml format scrubbing on a simple struct with default options.
@@ -63,7 +63,7 @@ func TestScrubSimpleFixedLenXml(t *testing.T) {
 		DbSecrets: []string{"db_secret_1", "db_secret_2"},
 	}
 
-	validateScrub(t, empty, user, userScrubbed, nil, XmlScrub)
+	validateScrub(t, empty, user, userScrubbed, nil, XMLScrub)
 }
 
 // Tests json format scrubbing on a simple struct with default options and varying mask length.
@@ -84,7 +84,7 @@ func TestScrubSimpleVaryLenJson(t *testing.T) {
 		DbSecrets: []string{"db_secret_1", "db_secret_2"},
 	}
 
-	validateScrub(t, empty, user, userScrubbed, nil, JsonScrub)
+	validateScrub(t, empty, user, userScrubbed, nil, JSONScrub)
 }
 
 // Tests xml format scrubbing on a simple struct with default options and varying mask length.
@@ -105,7 +105,7 @@ func TestScrubSimpleVaryLenXml(t *testing.T) {
 		DbSecrets: []string{"db_secret_1", "db_secret_2"},
 	}
 
-	validateScrub(t, empty, user, userScrubbed, nil, XmlScrub)
+	validateScrub(t, empty, user, userScrubbed, nil, XMLScrub)
 }
 
 // Tests json format scrubbing on a nested complex struct with specific sensitive fields.
@@ -159,7 +159,7 @@ func TestScrubNestedFixedLenJson(t *testing.T) {
 	secretFields["secret"]["symbol"] = "*"
 	secretFields["dbsecrets"]["symbol"] = "*"
 
-	validateScrub(t, empty, users, userScrubbed, secretFields, JsonScrub)
+	validateScrub(t, empty, users, userScrubbed, secretFields, JSONScrub)
 }
 
 // Tests xml format scrubbing on a nested complex struct with specific sensitive fields.
@@ -213,7 +213,7 @@ func TestScrubNestedFixedLenXml(t *testing.T) {
 	secretFields["secret"]["symbol"] = "*"
 	secretFields["dbsecrets"]["symbol"] = "*"
 
-	validateScrub(t, empty, users, userScrubbed, secretFields, XmlScrub)
+	validateScrub(t, empty, users, userScrubbed, secretFields, XMLScrub)
 }
 
 // Tests json format scrubbing on a nested complex struct with specific sensitive fields.
@@ -267,7 +267,7 @@ func TestScrubNestedVaryLenJson(t *testing.T) {
 	secretFields["secret"]["symbol"] = "*"
 	secretFields["dbsecrets"]["symbol"] = "*"
 
-	validateScrub(t, empty, users, userScrubbed, secretFields, JsonScrub)
+	validateScrub(t, empty, users, userScrubbed, secretFields, JSONScrub)
 }
 
 // Tests xml format scrubbing on a nested complex struct with specified sensitive fields.
@@ -321,7 +321,7 @@ func TestScrubNestedVaryLenXml(t *testing.T) {
 	secretFields["secret"]["symbol"] = "*"
 	secretFields["dbsecrets"]["symbol"] = "*"
 
-	validateScrub(t, empty, users, userScrubbed, secretFields, XmlScrub)
+	validateScrub(t, empty, users, userScrubbed, secretFields, XMLScrub)
 }
 
 // Tests json format scrubbing on a empty or nil input.
@@ -343,14 +343,14 @@ func TestScrubNilJson(t *testing.T) {
 	}
 
 	// Validate input with empty fields
-	validateScrub(t, empty, user, userScrubbed, nil, JsonScrub)
+	validateScrub(t, empty, user, userScrubbed, nil, JSONScrub)
 
 	// Validate empty pointer input
 	var userEmpty *User
-	validateScrub(t, empty, userEmpty, userEmpty, nil, JsonScrub)
+	validateScrub(t, empty, userEmpty, userEmpty, nil, JSONScrub)
 
 	// Validate nil input
-	validateScrub(t, empty, nil, nil, nil, JsonScrub)
+	validateScrub(t, empty, nil, nil, nil, JSONScrub)
 }
 
 // Tests xml format scrubbing on a empty or nil input.
@@ -372,14 +372,14 @@ func TestScrubNilXml(t *testing.T) {
 	}
 
 	// Validate input with empty fields
-	validateScrub(t, empty, user, userScrubbed, nil, XmlScrub)
+	validateScrub(t, empty, user, userScrubbed, nil, XMLScrub)
 
 	// Validate empty pointer input
 	var userEmpty *User
-	validateScrub(t, empty, userEmpty, userEmpty, nil, XmlScrub)
+	validateScrub(t, empty, userEmpty, userEmpty, nil, XMLScrub)
 
 	// Validate nil input
-	validateScrub(t, empty, nil, nil, nil, XmlScrub)
+	validateScrub(t, empty, nil, nil, nil, XMLScrub)
 }
 
 // Tests json format scrubbing on a nested complex struct with some nil, empty and specified sensitive fields.
@@ -434,7 +434,7 @@ func TestScrubNestedNilJson(t *testing.T) {
 	secretFields["secret"]["symbol"] = "*"
 	secretFields["dbsecrets"]["symbol"] = "*"
 
-	validateScrub(t, empty, users, userScrubbed, secretFields, JsonScrub)
+	validateScrub(t, empty, users, userScrubbed, secretFields, JSONScrub)
 }
 
 // Tests xml format scrubbing on a nested complex struct with some nil, empty and specified sensitive fields.
@@ -489,11 +489,11 @@ func TestScrubNestedNilXml(t *testing.T) {
 	secretFields["secret"]["symbol"] = "*"
 	secretFields["dbsecrets"]["symbol"] = "*"
 
-	validateScrub(t, empty, users, userScrubbed, secretFields, XmlScrub)
+	validateScrub(t, empty, users, userScrubbed, secretFields, XMLScrub)
 }
 
 // validateScrub is a helper function to validate scrubbing functionality on a struct.
-func validateScrub(t *testing.T, cloning, target, scrubbedMsg interface{}, secretFields map[string]map[string]string, dataType ScrubDataType) {
+func validateScrub(t *testing.T, cloning, target, scrubbedMsg interface{}, secretFields map[string]map[string]string, dataType DataType) {
 	t.Helper()
 
 	// Get the scrubbed string from util API.
@@ -503,10 +503,10 @@ func validateScrub(t *testing.T, cloning, target, scrubbedMsg interface{}, secre
 	var want string
 	// Compare it against the given scrubbed representaation.
 	switch dataType {
-	case JsonScrub:
+	case JSONScrub:
 		b, _ = json.Marshal(scrubbedMsg)
 		want = string(b)
-	case XmlScrub:
+	case XMLScrub:
 		b, _ = xml.MarshalIndent(scrubbedMsg, "  ", "    ")
 		want = string(b)
 	}

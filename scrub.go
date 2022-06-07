@@ -5,8 +5,6 @@
  * MIT License
  */
 
-// Forked version initiated by @grandeto
-//
 // Package scrub implements a scrubbing utility to hide sensitive fields from a struct.
 //
 // This utility can be used to purge sensitive fields from a deeply nested struct
@@ -49,7 +47,7 @@
 //
 //    ScrubSetup()
 //
-//    out := Scrub(emptyT, T, fieldsToScrub, JsonScrub)
+//    out := Scrub(emptyT, T, fieldsToScrub, JSONScrub)
 //    log.Println(out)
 //    OUTPUT: {username:administrator Password:******************** Codes:[..... ..... .....]}
 package scrub
@@ -67,31 +65,34 @@ var (
 	DefaultToScrub = map[string]map[string]string{
 		"password": make(map[string]string),
 	}
-	// Specifies mask length equals DefaultMaskLen or mask length equals to value length
+	// MaskLenVary specifies mask length equals DefaultMaskLen or mask length equals to value length
 	MaskLenVary    = false
+	// DefaultMaskLen specifies default mask length
 	DefaultMaskLen = 8
 )
 
-// StructDataType specifies supported formats
-type ScrubDataType string
+// DataType specifies supported formats
+type DataType string
 
 const (
-	XmlScrub  ScrubDataType = "xml"
-	JsonScrub ScrubDataType = "json"
+	// XMLScrub - support of xml format
+	XMLScrub  DataType = "xml"
+	// JSONScrub - support of json format
+	JSONScrub DataType = "json"
 )
 
 // Scrub scrubs all the specified string fields in the 'target' struct
-// at any level recursively and returns a ScrubDataType formatted string of the scrubbed struct.
+// at any level recursively and returns a DataType formatted string of the scrubbed struct.
 //
 // A pointer to a new empty instance of the 'target' struct is needed
 // to act as a 'cloning' of the 'target' to avoid race conditions
-func Scrub(cloning interface{}, target interface{}, fieldsToScrub  map[string]map[string]string, dataType ScrubDataType) string {
+func Scrub(cloning interface{}, target interface{}, fieldsToScrub  map[string]map[string]string, dataType DataType) string {
 	if invalidInput(cloning, target) {
 		switch dataType {
-		case JsonScrub:
+		case JSONScrub:
 			// Return json representation of 'nil' input
 			return "null"
-		case XmlScrub:
+		case XMLScrub:
 			// Return xml representation of 'nil' input
 			return ""
 		default:
@@ -102,26 +103,29 @@ func Scrub(cloning interface{}, target interface{}, fieldsToScrub  map[string]ma
 
 	// Clone target struct to avoid race conditions
 	switch dataType {
-	case JsonScrub:
-		if b, err := json.Marshal(target); err != nil {
+	case JSONScrub:
+		b, err := json.Marshal(target);
+
+		if err != nil {
 			return "null"
-		} else {
-
-			if err = json.Unmarshal(b, cloning); err != nil {
-				return "null"
-			}
-
 		}
-	case XmlScrub:
-		if b, err := xml.MarshalIndent(target, "  ", "    "); err != nil {
+
+		if err = json.Unmarshal(b, cloning); err != nil {
+			return "null"
+		}
+
+
+	case XMLScrub:
+		b, err := xml.MarshalIndent(target, "  ", "    ")
+
+		if err != nil {
 			return ""
-		} else {
-
-			if err = xml.Unmarshal(b, cloning); err != nil {
-				return ""
-			}
-
 		}
+
+		if err = xml.Unmarshal(b, cloning); err != nil {
+			return ""
+		}
+
 	default:
 		return "null"
 	}
@@ -137,25 +141,29 @@ func Scrub(cloning interface{}, target interface{}, fieldsToScrub  map[string]ma
 
 	// Get the marshalled string from the scrubb string and return the scrubbed string.
 	switch dataType {
-	case JsonScrub:
-		if b, err := json.Marshal(cloning); err != nil {
+	case JSONScrub:
+		b, err := json.Marshal(cloning)
+
+		if err != nil {
 			return "null"
-		} else {
-			return string(b)
 		}
-	case XmlScrub:
-		if b, err := xml.MarshalIndent(cloning, "  ", "    "); err != nil {
+
+		return string(b)
+	case XMLScrub:
+		b, err := xml.MarshalIndent(cloning, "  ", "    ")
+
+		if err != nil {
 			return ""
-		} else {
-			return string(b)
 		}
+
+		return string(b)
 	default:
 		return ""
 	}
 }
 
 // scrubInternal scrubs all the specified string fields in the 'target' struct
-// at any level recursively and returns a ScrubDataType formatted string of the scrubbed struct.
+// at any level recursively and returns a DataType formatted string of the scrubbed struct.
 //
 // It loops over the given 'target' struct recursively, looking for 'string'
 // field names specified in 'fieldsToScrub'. If found, it scrubs the value
