@@ -1,5 +1,6 @@
 [![Builds](https://github.com/grandeto/go-scrub/workflows/Build/badge.svg?branch=master)](https://github.com/grandeto/go-scrub/actions?query=branch%3Amaster+workflow%3ABuild)
 [![Go Report Card](https://goreportcard.com/badge/github.com/grandeto/go-scrub)](https://goreportcard.com/report/github.com/grandeto/go-scrub)
+[![GoDoc](https://godoc.org/github.com/grandeto/go-scrub?status.svg)](https://godoc.org/github.com/grandeto/go-scrub)
 
 # go-scrub
 
