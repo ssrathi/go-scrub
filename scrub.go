@@ -252,6 +252,13 @@ func scrubInternal(target interface{}, fieldName string, fieldsToScrub  map[stri
 		return
 	}
 
+	if targetType.Kind() == reflect.Map {
+
+		scrubInternalMap(targetValue, fieldsToScrub)
+
+		return
+	}
+
 	// If 'fieldName' is not set, then the API was not called on a struct.
 	// Since it is not possible to find the variable name of a non-struct field,
 	// we can't compare it with 'fieldsToScrub'.
@@ -259,9 +266,42 @@ func scrubInternal(target interface{}, fieldName string, fieldsToScrub  map[stri
 		return
 	}
 
+	if mask, ok := doMasking(targetValue, fieldName, fieldsToScrub, true); ok {
+		targetValue.SetString(mask)
+	}
+}
+
+func scrubInternalMap(targetMap reflect.Value, fieldsToScrub map[string]map[string]string) reflect.Value {
+	for _, k := range targetMap.MapKeys() {
+		v := targetMap.MapIndex(k)
+
+		if v.Elem().Kind() == reflect.String {
+			if mask, ok := doMasking(v.Elem(), k.String(), fieldsToScrub, false); ok {
+				targetMap.SetMapIndex(reflect.ValueOf(k.String()), reflect.ValueOf(mask))
+			}
+		}
+
+		if v.Elem().Kind() == reflect.Array || v.Elem().Kind() == reflect.Slice {
+			for i := 0; i < v.Elem().Len(); i++ {
+				arrValue := v.Elem().Index(i)
+
+				if arrValue.Elem().Kind() == reflect.Map {
+					scrubInternalMap(arrValue.Elem(), fieldsToScrub)
+				}
+			}
+		}
+	}
+
+	return targetMap
+}
+
+func doMasking(targetValue reflect.Value, fieldName string, fieldsToScrub map[string]map[string]string, checkCanSet bool) (string, bool) {
 	if opts, ok := fieldsToScrub[strings.ToLower(fieldName)]; ok {
-		// Scrub this string value. Other types are not scrubbed.
-		if targetValue.CanSet() && targetValue.Kind() == reflect.String && !targetValue.IsZero() {
+		if checkCanSet && !targetValue.CanSet() {
+			return "", false
+		}
+
+		if targetValue.Kind() == reflect.String && !targetValue.IsZero() {
 			var symbol string
 
 			if v, ok := opts["symbol"]; ok {
@@ -280,9 +320,31 @@ func scrubInternal(target interface{}, fieldName string, fieldsToScrub  map[stri
 				mask = strings.Repeat(symbol, DefaultMaskLen)
 			}
 
-			targetValue.SetString(mask)
+			return mask, ok
 		}
+
+		// var symbol string
+
+		// if v, ok := opts["symbol"]; ok {
+		// 	symbol = v
+		// } else {
+		// 	// Fallback to default symbol *
+		// 	symbol = "*"
+		// }
+
+		// var mask string
+		// if MaskLenVary {
+		// 	// Mask symbols' length equals to value length
+		// 	mask = strings.Repeat(symbol, targetValue.Len())
+		// } else {
+		// 	// Use default mask symbols' length
+		// 	mask = strings.Repeat(symbol, DefaultMaskLen)
+		// }
+
+		// return mask, ok
 	}
+
+	return "", false
 }
 
 // Validate target pointers
