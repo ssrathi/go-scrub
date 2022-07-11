@@ -22,6 +22,7 @@ type Users struct {
 	Secret   string
 	Keys     []string
 	UserInfo []User
+	MapData  map[string]interface{}
 }
 
 // Tests json format scrubbing on a simple struct with default options.
@@ -127,6 +128,13 @@ func TestScrubNestedFixedLenJson(t *testing.T) {
 				DbSecrets: []string{"Jane's_db_secret_1", "Jane's_db_secret_2"},
 			},
 		},
+		MapData: map[string]interface{}{
+			"72": []map[string]interface{}{
+				{"86":"84240002107004C1119054885C52A2555576F148AA"},
+				{"86":"84240000083AB8700FAE0CB0DD"},
+			},
+			"91":"CA3D8B21F20B5CEB0012",
+		},
 	}
 
 	empty := &Users{}
@@ -146,6 +154,13 @@ func TestScrubNestedFixedLenJson(t *testing.T) {
 				DbSecrets: []string{"********", "********"},
 			},
 		},
+		MapData: map[string]interface{}{
+			"72": []map[string]interface{}{
+				{"86":"********"},
+				{"86":"********"},
+			},
+			"91": "********",
+		},
 	}
 
 	secretFields := map[string]map[string]string{
@@ -153,6 +168,8 @@ func TestScrubNestedFixedLenJson(t *testing.T) {
 		"keys": make(map[string]string),
 		"secret": make(map[string]string),
 		"dbsecrets": make(map[string]string),
+		"91": make(map[string]string),
+		"86": make(map[string]string),
 	}
 	secretFields["password"]["symbol"] = "*"
 	secretFields["keys"]["symbol"] = "."
