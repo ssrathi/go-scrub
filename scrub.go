@@ -50,6 +50,8 @@
 //    out := scrub.Scrub(emptyT, T, fieldsToScrub, JSONScrub)
 //    log.Println(out)
 //    OUTPUT: {username:administrator Password:******************** Codes:[..... ..... .....]}
+//
+// NOTE: Please reffer to `scrub_test.go` for all supported scenarios
 package scrub
 
 import (
@@ -162,12 +164,13 @@ func Scrub(cloning interface{}, target interface{}, fieldsToScrub  map[string]ma
 	}
 }
 
-// scrubInternal scrubs all the specified string fields in the 'target' struct
-// at any level recursively and returns a DataType formatted string of the scrubbed struct.
+// scrubInternal scrubs all the specified string fields and map fields of type map[string]interface{}
+// in the 'target' struct at any level recursively and returns a DataType formatted string of the
+// scrubbed struct.
 //
 // It loops over the given 'target' struct recursively, looking for 'string'
-// field names specified in 'fieldsToScrub'. If found, it scrubs the value
-// with the given symbol defined in 'fieldsToScrub'
+// field names and keys in maps of type map[string]interface{} specified in 'fieldsToScrub'.
+// If found, it scrubs the value with the given symbol defined in 'fieldsToScrub'
 // Depending on the MaskLenVary option scrub length can be fixed or vary.
 //
 // This is an internal API. It should not be used directly by any caller.
@@ -253,7 +256,7 @@ func scrubInternal(target interface{}, fieldName string, fieldsToScrub  map[stri
 	}
 
 	if targetType.Kind() == reflect.Map {
-
+		// If target is a map, then recurse on each of its keys.
 		scrubInternalMap(targetValue, fieldsToScrub)
 
 		return
@@ -271,6 +274,9 @@ func scrubInternal(target interface{}, fieldName string, fieldsToScrub  map[stri
 	}
 }
 
+// scrubInternalMap iterate recursively over maps and scrubs the value with the given symbol
+// defined in 'fieldsToScrub'
+// NOTE: Currently only string values in maps of type map[string]interface{} are scrubbed
 func scrubInternalMap(targetMap reflect.Value, fieldsToScrub map[string]map[string]string) reflect.Value {
 	for _, k := range targetMap.MapKeys() {
 		v := targetMap.MapIndex(k)
@@ -299,12 +305,16 @@ func scrubInternalMap(targetMap reflect.Value, fieldsToScrub map[string]map[stri
 	return targetMap
 }
 
+// doMasking does the real masking of the string values
 func doMasking(targetValue reflect.Value, fieldName string, fieldsToScrub map[string]map[string]string, checkCanSet bool) (string, bool) {
 	if opts, ok := fieldsToScrub[strings.ToLower(fieldName)]; ok {
+
+		// Check if value can be changed depending of the use case
 		if checkCanSet && !targetValue.CanSet() {
 			return "", false
 		}
 
+		// Scrub this string value. Other types are not scrubbed.
 		if targetValue.Kind() == reflect.String && !targetValue.IsZero() {
 			var symbol string
 
@@ -326,26 +336,6 @@ func doMasking(targetValue reflect.Value, fieldName string, fieldsToScrub map[st
 
 			return mask, ok
 		}
-
-		// var symbol string
-
-		// if v, ok := opts["symbol"]; ok {
-		// 	symbol = v
-		// } else {
-		// 	// Fallback to default symbol *
-		// 	symbol = "*"
-		// }
-
-		// var mask string
-		// if MaskLenVary {
-		// 	// Mask symbols' length equals to value length
-		// 	mask = strings.Repeat(symbol, targetValue.Len())
-		// } else {
-		// 	// Use default mask symbols' length
-		// 	mask = strings.Repeat(symbol, DefaultMaskLen)
-		// }
-
-		// return mask, ok
 	}
 
 	return "", false

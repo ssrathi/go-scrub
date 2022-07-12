@@ -56,6 +56,8 @@ go get github.com/grandeto/go-scrub@latest
   OUTPUT: {username:administrator Password:******************** Codes:[..... ..... .....]}
 ```
 
+- NOTE: Please reffer to `scrub_test.go` for all supported scenarios
+
 ## Contributing
 
 Contributions are most welcome! Please create a new issue and link your PR to it.
