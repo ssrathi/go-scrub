@@ -275,6 +275,10 @@ func scrubInternalMap(targetMap reflect.Value, fieldsToScrub map[string]map[stri
 	for _, k := range targetMap.MapKeys() {
 		v := targetMap.MapIndex(k)
 
+		if v.Type().Kind() != reflect.Interface {
+			continue
+		}
+
 		if v.Elem().Kind() == reflect.String {
 			if mask, ok := doMasking(v.Elem(), k.String(), fieldsToScrub, false); ok {
 				targetMap.SetMapIndex(reflect.ValueOf(k.String()), reflect.ValueOf(mask))
