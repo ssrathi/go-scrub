@@ -12,9 +12,11 @@ import (
 // Structure definitions to test scrubbing functionalities.
 // Simple struct
 type User struct {
-	Username  string
-	Password  string
-	DbSecrets []string
+	Username           string
+	Password           string
+	DbSecrets          []string
+	MapData            map[string]interface{}
+	UnsupportedMapData map[string]string
 }
 
 // Nested struct
@@ -22,7 +24,6 @@ type Users struct {
 	Secret   string
 	Keys     []string
 	UserInfo []User
-	MapData  map[string]interface{}
 }
 
 // Tests json format scrubbing on a simple struct with default options.
@@ -128,13 +129,6 @@ func TestScrubNestedFixedLenJson(t *testing.T) {
 				DbSecrets: []string{"Jane's_db_secret_1", "Jane's_db_secret_2"},
 			},
 		},
-		MapData: map[string]interface{}{
-			"72": []map[string]interface{}{
-				{"86":"84240002107004C1119054885C52A2555576F148AA"},
-				{"86":"84240000083AB8700FAE0CB0DD"},
-			},
-			"91":"CA3D8B21F20B5CEB0012",
-		},
 	}
 
 	empty := &Users{}
@@ -154,13 +148,6 @@ func TestScrubNestedFixedLenJson(t *testing.T) {
 				DbSecrets: []string{"********", "********"},
 			},
 		},
-		MapData: map[string]interface{}{
-			"72": []map[string]interface{}{
-				{"86":"********"},
-				{"86":"********"},
-			},
-			"91": "********",
-		},
 	}
 
 	secretFields := map[string]map[string]string{
@@ -168,8 +155,6 @@ func TestScrubNestedFixedLenJson(t *testing.T) {
 		"keys": make(map[string]string),
 		"secret": make(map[string]string),
 		"dbsecrets": make(map[string]string),
-		"91": make(map[string]string),
-		"86": make(map[string]string),
 	}
 	secretFields["password"]["symbol"] = "*"
 	secretFields["keys"]["symbol"] = "."
@@ -332,6 +317,406 @@ func TestScrubNestedVaryLenXml(t *testing.T) {
 		"keys": make(map[string]string),
 		"secret": make(map[string]string),
 		"dbsecrets": make(map[string]string),
+	}
+	secretFields["password"]["symbol"] = "*"
+	secretFields["keys"]["symbol"] = "."
+	secretFields["secret"]["symbol"] = "*"
+	secretFields["dbsecrets"]["symbol"] = "*"
+
+	validateScrub(t, empty, users, userScrubbed, secretFields, XMLScrub)
+}
+
+// Tests json format scrubbing on a nested complex struct with specific sensitive fields and map[string]interface{} support.
+func TestScrubNestedMapSupportFixedLenJson(t *testing.T) {
+	MaskLenVary = false
+
+	users := &Users{
+		Secret: "secret_sshhh",
+		Keys:   []string{"key_1", "key_2", "key_3"},
+		UserInfo: []User{
+			{
+				Username:  "John Doe",
+				Password:  "John_Doe's_Password",
+				DbSecrets: []string{"John's_db_secret_1", "John's_db_secret_2"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"84240002107004C1119054885C52A2555576F148AA"},
+						{"86":"84240000083AB8700FAE0CB0DD"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91":"CA3D8B21F20B5CEB0012",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+			{
+				Username:  "Jane Doe",
+				Password:  "Jane_Doe's_Password",
+				DbSecrets: []string{"Jane's_db_secret_1", "Jane's_db_secret_2"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"84240002107004C1119054885C52A2555576F148AA"},
+						{"86":"84240000083AB8700FAE0CB0DD"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91":"CA3D8B21F20B5CEB0012",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+		},
+	}
+
+	empty := &Users{}
+
+	userScrubbed := &Users{
+		Secret: "********",
+		Keys:   []string{"........", "........", "........"},
+		UserInfo: []User{
+			{
+				Username:  "John Doe",
+				Password:  "********",
+				DbSecrets: []string{"********", "********"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"********"},
+						{"86":"********"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91": "********",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+			{
+				Username:  "Jane Doe",
+				Password:  "********",
+				DbSecrets: []string{"********", "********"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"********"},
+						{"86":"********"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91": "********",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+		},
+	}
+
+	secretFields := map[string]map[string]string{
+		"password": make(map[string]string),
+		"keys": make(map[string]string),
+		"secret": make(map[string]string),
+		"dbsecrets": make(map[string]string),
+		"91": make(map[string]string),
+		"86": make(map[string]string),
+	}
+	secretFields["password"]["symbol"] = "*"
+	secretFields["keys"]["symbol"] = "."
+	secretFields["secret"]["symbol"] = "*"
+	secretFields["dbsecrets"]["symbol"] = "*"
+
+	validateScrub(t, empty, users, userScrubbed, secretFields, JSONScrub)
+}
+
+// Tests json format scrubbing on a nested complex struct with specific sensitive fields and map[string]interface{} support.
+func TestScrubNestedMapSupportVaryLenJson(t *testing.T) {
+	MaskLenVary = true
+
+	users := &Users{
+		Secret: "secret_sshhh",
+		Keys:   []string{"key_1", "key_2", "key_3"},
+		UserInfo: []User{
+			{
+				Username:  "John Doe",
+				Password:  "John_Doe's_Password",
+				DbSecrets: []string{"John's_db_secret_1", "John's_db_secret_2"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"84240002107004C1119054885C52A2555576F148AA"},
+						{"86":"84240000083AB8700FAE0CB0DD"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91":"CA3D8B21F20B5CEB0012",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+			{
+				Username:  "Jane Doe",
+				Password:  "Jane_Doe's_Password",
+				DbSecrets: []string{"Jane's_db_secret_1", "Jane's_db_secret_2"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"84240002107004C1119054885C52A2555576F148AA"},
+						{"86":"84240000083AB8700FAE0CB0DD"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91":"CA3D8B21F20B5CEB0012",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+		},
+	}
+
+	empty := &Users{}
+
+	userScrubbed := &Users{
+		Secret: "************",
+		Keys:   []string{".....", ".....", "....."},
+		UserInfo: []User{
+			{
+				Username:  "John Doe",
+				Password:  "*******************",
+				DbSecrets: []string{"******************", "******************"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"******************************************"},
+						{"86":"**************************"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91": "********************",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+			{
+				Username:  "Jane Doe",
+				Password:  "*******************",
+				DbSecrets: []string{"******************", "******************"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"******************************************"},
+						{"86":"**************************"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91": "********************",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+		},
+	}
+
+	secretFields := map[string]map[string]string{
+		"password": make(map[string]string),
+		"keys": make(map[string]string),
+		"secret": make(map[string]string),
+		"dbsecrets": make(map[string]string),
+		"91": make(map[string]string),
+		"86": make(map[string]string),
+	}
+	secretFields["password"]["symbol"] = "*"
+	secretFields["keys"]["symbol"] = "."
+	secretFields["secret"]["symbol"] = "*"
+	secretFields["dbsecrets"]["symbol"] = "*"
+
+	validateScrub(t, empty, users, userScrubbed, secretFields, JSONScrub)
+}
+
+// Tests xml format scrubbing on a nested complex struct with specific sensitive fields and map[string]interface{} support.
+func TestScrubNestedMapSupportFixedLenxml(t *testing.T) {
+	MaskLenVary = false
+
+	users := &Users{
+		Secret: "secret_sshhh",
+		Keys:   []string{"key_1", "key_2", "key_3"},
+		UserInfo: []User{
+			{
+				Username:  "John Doe",
+				Password:  "John_Doe's_Password",
+				DbSecrets: []string{"John's_db_secret_1", "John's_db_secret_2"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"84240002107004C1119054885C52A2555576F148AA"},
+						{"86":"84240000083AB8700FAE0CB0DD"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91":"CA3D8B21F20B5CEB0012",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+			{
+				Username:  "Jane Doe",
+				Password:  "Jane_Doe's_Password",
+				DbSecrets: []string{"Jane's_db_secret_1", "Jane's_db_secret_2"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"84240002107004C1119054885C52A2555576F148AA"},
+						{"86":"84240000083AB8700FAE0CB0DD"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91":"CA3D8B21F20B5CEB0012",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+		},
+	}
+
+	empty := &Users{}
+
+	userScrubbed := &Users{
+		Secret: "********",
+		Keys:   []string{"........", "........", "........"},
+		UserInfo: []User{
+			{
+				Username:  "John Doe",
+				Password:  "********",
+				DbSecrets: []string{"********", "********"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"********"},
+						{"86":"********"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91": "********",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+			{
+				Username:  "Jane Doe",
+				Password:  "********",
+				DbSecrets: []string{"********", "********"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"********"},
+						{"86":"********"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91": "********",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+		},
+	}
+
+	secretFields := map[string]map[string]string{
+		"password": make(map[string]string),
+		"keys": make(map[string]string),
+		"secret": make(map[string]string),
+		"dbsecrets": make(map[string]string),
+		"91": make(map[string]string),
+		"86": make(map[string]string),
+	}
+	secretFields["password"]["symbol"] = "*"
+	secretFields["keys"]["symbol"] = "."
+	secretFields["secret"]["symbol"] = "*"
+	secretFields["dbsecrets"]["symbol"] = "*"
+
+	validateScrub(t, empty, users, userScrubbed, secretFields, XMLScrub)
+}
+
+// Tests xml format scrubbing on a nested complex struct with specific sensitive fields and map[string]interface{} support.
+func TestScrubNestedMapSupportVaryLenXml(t *testing.T) {
+	MaskLenVary = true
+
+	users := &Users{
+		Secret: "secret_sshhh",
+		Keys:   []string{"key_1", "key_2", "key_3"},
+		UserInfo: []User{
+			{
+				Username:  "John Doe",
+				Password:  "John_Doe's_Password",
+				DbSecrets: []string{"John's_db_secret_1", "John's_db_secret_2"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"84240002107004C1119054885C52A2555576F148AA"},
+						{"86":"84240000083AB8700FAE0CB0DD"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91":"CA3D8B21F20B5CEB0012",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+			{
+				Username:  "Jane Doe",
+				Password:  "Jane_Doe's_Password",
+				DbSecrets: []string{"Jane's_db_secret_1", "Jane's_db_secret_2"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"84240002107004C1119054885C52A2555576F148AA"},
+						{"86":"84240000083AB8700FAE0CB0DD"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91":"CA3D8B21F20B5CEB0012",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+		},
+	}
+
+	empty := &Users{}
+
+	userScrubbed := &Users{
+		Secret: "************",
+		Keys:   []string{".....", ".....", "....."},
+		UserInfo: []User{
+			{
+				Username:  "John Doe",
+				Password:  "*******************",
+				DbSecrets: []string{"******************", "******************"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"******************************************"},
+						{"86":"**************************"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91": "********************",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+			{
+				Username:  "Jane Doe",
+				Password:  "*******************",
+				DbSecrets: []string{"******************", "******************"},
+				MapData: map[string]interface{}{
+					"72": []map[string]interface{}{
+						{"86":"******************************************"},
+						{"86":"**************************"},
+						{"77":"84240000083AB8700FAE0CB0DD"},
+					},
+					"91": "********************",
+				},
+				UnsupportedMapData: map[string]string{
+					"91": "CA3D8B21F20B5CEB0012",
+				},
+			},
+		},
+	}
+
+	secretFields := map[string]map[string]string{
+		"password": make(map[string]string),
+		"keys": make(map[string]string),
+		"secret": make(map[string]string),
+		"dbsecrets": make(map[string]string),
+		"91": make(map[string]string),
+		"86": make(map[string]string),
 	}
 	secretFields["password"]["symbol"] = "*"
 	secretFields["keys"]["symbol"] = "."
