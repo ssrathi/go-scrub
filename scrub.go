@@ -18,40 +18,110 @@
 // Also, The input struct must be passed by its address, otherwise the values
 // of its fields cannot be changed.
 //
-// Example
+// Example:
 //
-//    type testScrub struct {
-//    	 Username string
-//    	 Password string
-//    	 Codes    []string
-//    }
+//		import "github.com/grandeto/go-scrub"
 //
-//    T := &testScrub{
-//       Username: "administrator",
-//       Password: "my_secret_passphrase",
-//       Codes:    []string{"pass1", "pass2", "pass3"},
-//    }
+//		// Have a struct with some sensitive fields.
+//		type testScrub struct {
+//			Username string
+//			Password string
+//			Codes    []string
+//		}
 //
-//    emptyT := &testScrub{}
+//		type fieldScrubOpts struct {
+//			maskingSymbol string
+//			partScrubConf *PartScrubConf
+//		}
 //
-//    fieldsToScrub := map[string]map[string]string{
-//       "password": make(map[string]string),
-//       "codes": make(map[string]string),
-//    }
+//		func newFieldScrubOpts(
+//			maskingSymbol string,
+//			partScrubConf *PartScrubConf,
+//		) *fieldScrubOpts {
+//			return &fieldScrubOpts{
+//				maskingSymbol,
+//				partScrubConf,
+//			}
+//		}
 //
-//    func ScrubSetup() {
-//       fieldsToScrub["password"]["symbol"] = "*"
-//       fieldsToScrub["codes"]["symbol"] = "."
-//       scrub.MaskLenVary = true
-//    }
+//		func (f *fieldScrubOpts) GetMaskingSymbol() string {
+//			return f.maskingSymbol
+//		}
 //
-//    ScrubSetup()
+//		func (f *fieldScrubOpts) PartMaskEnabled() bool {
+//			if f.partScrubConf == nil {
+//				return false
+//			}
 //
-//    out := scrub.Scrub(emptyT, T, fieldsToScrub, JSONScrub)
-//    log.Println(out)
-//    OUTPUT: {username:administrator Password:******************** Codes:[..... ..... .....]}
+//			return f.partScrubConf.PartMaskEnabled
+//		}
 //
-// NOTE: Please reffer to `scrub_test.go` for all supported scenarios
+//		func (f *fieldScrubOpts) PartMaskMinFldLen() int {
+//			if f.partScrubConf == nil {
+//				return 0
+//			}
+//
+//			return f.partScrubConf.PartMaskMinFldLen
+//		}
+//
+//		func (f *fieldScrubOpts) PartMaskMaxFldLen() int {
+//			if f.partScrubConf == nil {
+//				return 0
+//			}
+//
+//			return f.partScrubConf.PartMaskMaxFldLen
+//		}
+//
+//		func (f *fieldScrubOpts) PartMaskVisibleFrontLen() int {
+//			if f.partScrubConf == nil {
+//				return 0
+//			}
+//
+//			return f.partScrubConf.visibleFrontLen
+//		}
+//
+//		func (f *fieldScrubOpts) PartMaskVisibleBackOnlyIfFldLenGreaterThan() int {
+//			if f.partScrubConf == nil {
+//				return 0
+//			}
+//
+//			return f.partScrubConf.visibleBackOnlyIfFldLenGreaterThan
+//		}
+//
+//		func (f *fieldScrubOpts) PartMaskVisibleBackLen() int {
+//			if f.partScrubConf == nil {
+//				return 0
+//			}
+//
+//			return f.partScrubConf.visibleBackLen
+//		}
+//
+//		// Create a struct with some sensitive data.
+//		T := &testScrub{
+//			Username: "administrator",
+//			Password: "my_secret_passphrase",
+//			Codes:    []string{"pass1", "pass2", "pass3"},
+//		}
+//
+//		// Create empty instance of testScrub
+//		emptyT := &testScrub{}
+//
+//		// Create a set of field names to scrub (default is 'password').
+//		fieldsToScrub := map[string]FieldScrubOptioner{
+//			"password":  newFieldScrubOpts("*", nil),
+//			"codes":      newFieldScrubOpts(".", nil),
+//		}
+//
+//		scrub.MaskLenVary = true
+//
+//		// Call the util API to get a JSON formatted string with scrubbed field values.
+//		out := scrub.Scrub(emptyT, T, fieldsToScrub, scrub.JSONScrub)
+//
+//		// Log the scrubbed string without worrying about prying eyes!
+//		log.Println(out)
+//		// OUTPUT: {username:administrator Password:******************** Codes:[..... ..... .....]}
+//
+//		// NOTE: Please reffer to `scrub_test.go` for all supported scenarios
 package scrub
 
 import (
@@ -62,6 +132,20 @@ import (
 	"strings"
 )
 
+// DataType specifies supported formats
+type DataType string
+
+const (
+	// XMLScrub - support of xml format
+	XMLScrub DataType = "xml"
+	// JSONScrub - support of json format
+	JSONScrub DataType = "json"
+	// defaultMaskLen specifies default mask length
+	defaultMaskLen int = 8
+	// defaultMaskSymbol specifies default mask symbol
+	defaultMaskSymbol string = "*"
+)
+
 var (
 	// defaultToScrub contains default field names to scrub.
 	// NOTE: these fields should be all lowercase. Comparison is case insensitive.
@@ -70,10 +154,6 @@ var (
 	}
 	// MaskLenVary specifies mask length equals DefaultMaskLen or mask length equals to value length
 	MaskLenVary bool = false
-	// defaultMaskLen specifies default mask length
-	defaultMaskLen int = 8
-	// defaultMaskSymbol specifies default mask symbol
-	defaultMaskSymbol string = "*"
 )
 
 type FieldScrubOptioner interface {
@@ -142,16 +222,6 @@ func NewPartScrubConf(
 		visibleBackLen,
 	}
 }
-
-// DataType specifies supported formats
-type DataType string
-
-const (
-	// XMLScrub - support of xml format
-	XMLScrub DataType = "xml"
-	// JSONScrub - support of json format
-	JSONScrub DataType = "json"
-)
 
 // Scrub scrubs all the specified string fields in the 'target' struct
 // at any level recursively and returns a DataType formatted string of the scrubbed struct.
