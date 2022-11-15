@@ -163,10 +163,10 @@ func TestScrubSimplePartialMask(t *testing.T) {
 
 	secretFields := map[string]FieldScrubOptioner{
 		"username":  newFieldScrubOpts("*", NewPartScrubConf(true, 10, 19, 6, 16, 4)),
-		"password":  newFieldScrubOpts("*", nil),
-		"keys":      newFieldScrubOpts(".", nil),
-		"secret":    newFieldScrubOpts("*", nil),
-		"dbsecrets": newFieldScrubOpts("*", nil),
+		"password":  nil,
+		"keys":      nil,
+		"secret":    nil,
+		"dbsecrets": nil,
 	}
 
 	validateScrub(t, empty, user, userScrubbed, secretFields, JSONScrub)
@@ -256,10 +256,10 @@ func TestScrubNestedFixedLen(t *testing.T) {
 	}
 
 	secretFields := map[string]FieldScrubOptioner{
-		"password":  newFieldScrubOpts("*", nil),
+		"password":  nil,
 		"keys":      newFieldScrubOpts(".", nil),
-		"secret":    newFieldScrubOpts("*", nil),
-		"dbsecrets": newFieldScrubOpts("*", nil),
+		"secret":    nil,
+		"dbsecrets": nil,
 	}
 
 	validateScrub(t, empty, users, userScrubbed, secretFields, JSONScrub)
@@ -307,10 +307,10 @@ func TestScrubNestedVaryLen(t *testing.T) {
 	}
 
 	secretFields := map[string]FieldScrubOptioner{
-		"password":  newFieldScrubOpts("*", nil),
+		"password":  nil,
 		"keys":      newFieldScrubOpts(".", nil),
-		"secret":    newFieldScrubOpts("*", nil),
-		"dbsecrets": newFieldScrubOpts("*", nil),
+		"secret":    nil,
+		"dbsecrets": nil,
 	}
 
 	validateScrub(t, empty, users, userScrubbed, secretFields, JSONScrub)
@@ -322,9 +322,9 @@ func TestScrubNestedPartialMask(t *testing.T) {
 	MaskLenVary = true
 
 	secretFields := map[string]FieldScrubOptioner{
-		"password":  newFieldScrubOpts("*", nil),
+		"password":  nil,
 		"keys":      newFieldScrubOpts(".", NewPartScrubConf(true, 10, 19, 6, 16, 4)),
-		"secret":    newFieldScrubOpts("*", nil),
+		"secret":    nil,
 		"dbsecrets": newFieldScrubOpts("*", NewPartScrubConf(true, 10, 19, 6, 16, 4)),
 	}
 
@@ -516,10 +516,10 @@ func TestScrubNestedMapSupportFixedLen(t *testing.T) {
 	}
 
 	secretFields := map[string]FieldScrubOptioner{
-		"password":  newFieldScrubOpts("*", nil),
+		"password":  nil,
 		"keys":      newFieldScrubOpts(".", nil),
-		"secret":    newFieldScrubOpts("*", nil),
-		"dbsecrets": newFieldScrubOpts("*", nil),
+		"secret":    nil,
+		"dbsecrets": nil,
 		"91":        nil,
 		"86":        nil,
 	}
@@ -613,10 +613,10 @@ func TestScrubNestedMapSupportVaryLen(t *testing.T) {
 	}
 
 	secretFields := map[string]FieldScrubOptioner{
-		"password":  newFieldScrubOpts("*", nil),
+		"password":  nil,
 		"keys":      newFieldScrubOpts(".", nil),
-		"secret":    newFieldScrubOpts("*", nil),
-		"dbsecrets": newFieldScrubOpts("*", nil),
+		"secret":    nil,
+		"dbsecrets": nil,
 		"91":        nil,
 		"86":        nil,
 	}
@@ -630,10 +630,10 @@ func TestScrubNestedMapSupportPartialMask(t *testing.T) {
 	MaskLenVary = true
 
 	secretFields := map[string]FieldScrubOptioner{
-		"password":  newFieldScrubOpts("*", nil),
+		"password":  nil,
 		"keys":      newFieldScrubOpts(".", nil),
-		"secret":    newFieldScrubOpts("*", nil),
-		"dbsecrets": newFieldScrubOpts("*", nil),
+		"secret":    nil,
+		"dbsecrets": nil,
 		"91":        newFieldScrubOpts("*", NewPartScrubConf(true, 10, 19, 6, 16, 4)),
 		"86":        newFieldScrubOpts("*", NewPartScrubConf(true, 10, 19, 6, 16, 4)),
 	}
@@ -969,10 +969,10 @@ func TestScrubNestedNilInput(t *testing.T) {
 
 	// Test a nested struct with some empty and nil fields.
 	secretFields := map[string]FieldScrubOptioner{
-		"password":  newFieldScrubOpts("*", nil),
+		"password":  nil,
 		"keys":      newFieldScrubOpts(".", nil),
-		"secret":    newFieldScrubOpts("*", nil),
-		"dbsecrets": newFieldScrubOpts("*", nil),
+		"secret":    nil,
+		"dbsecrets": nil,
 	}
 
 	validateScrub(t, empty, users, userScrubbed, secretFields, JSONScrub)
