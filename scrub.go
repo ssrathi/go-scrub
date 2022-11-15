@@ -77,7 +77,7 @@
 //				return 0
 //			}
 //
-//			return f.partScrubConf.visibleFrontLen
+//			return f.partScrubConf.VisibleFrontLen
 //		}
 //
 //		func (f *fieldScrubOpts) PartMaskVisibleBackOnlyIfFldLenGreaterThan() int {
@@ -85,7 +85,7 @@
 //				return 0
 //			}
 //
-//			return f.partScrubConf.visibleBackOnlyIfFldLenGreaterThan
+//			return f.partScrubConf.VisibleBackOnlyIfFldLenGreaterThan
 //		}
 //
 //		func (f *fieldScrubOpts) PartMaskVisibleBackLen() int {
@@ -93,7 +93,7 @@
 //				return 0
 //			}
 //
-//			return f.partScrubConf.visibleBackLen
+//			return f.partScrubConf.VisibleBackLen
 //		}
 //
 //		// Create a struct with some sensitive data.
@@ -202,9 +202,9 @@ type PartScrubConf struct {
 	PartMaskEnabled                    bool
 	PartMaskMinFldLen                  int
 	PartMaskMaxFldLen                  int
-	visibleFrontLen                    int
-	visibleBackOnlyIfFldLenGreaterThan int
-	visibleBackLen                     int
+	VisibleFrontLen                    int
+	VisibleBackOnlyIfFldLenGreaterThan int
+	VisibleBackLen                     int
 }
 
 // NewPartScrubConf is PartScrubConf constructor

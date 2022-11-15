@@ -75,7 +75,7 @@ func (f *fieldScrubOpts) PartMaskVisibleFrontLen() int {
 		return 0
 	}
 
-	return f.partScrubConf.visibleFrontLen
+	return f.partScrubConf.VisibleFrontLen
 }
 
 func (f *fieldScrubOpts) PartMaskVisibleBackOnlyIfFldLenGreaterThan() int {
@@ -83,7 +83,7 @@ func (f *fieldScrubOpts) PartMaskVisibleBackOnlyIfFldLenGreaterThan() int {
 		return 0
 	}
 
-	return f.partScrubConf.visibleBackOnlyIfFldLenGreaterThan
+	return f.partScrubConf.VisibleBackOnlyIfFldLenGreaterThan
 }
 
 func (f *fieldScrubOpts) PartMaskVisibleBackLen() int {
@@ -91,7 +91,7 @@ func (f *fieldScrubOpts) PartMaskVisibleBackLen() int {
 		return 0
 	}
 
-	return f.partScrubConf.visibleBackLen
+	return f.partScrubConf.VisibleBackLen
 }
 
 // Tests scrubbing on a simple struct with default options.
