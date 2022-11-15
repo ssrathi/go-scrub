@@ -4,7 +4,7 @@
 
 # go-scrub
 
-A scrubbing utility in Golang to hide sensitive fields from a struct prior to logging.
+A scrubbing utility in Golang to mask sensitive fields from a struct prior to logging.
 
 Since the scrubbing utility function needs to work on any Golang struct where its fields and members are known only at runtime, we can leverage ["reflect"](https://pkg.go.dev/reflect), a powerful package from the Golang standard library, to scrub sensitive fields at any level of a deeply nested structure recursively.
 
@@ -15,45 +15,106 @@ go get github.com/grandeto/go-scrub@latest
 
 ## Usage
 ```go
-  import "github.com/grandeto/go-scrub"
+import "github.com/grandeto/go-scrub"
 
-  // Have a struct with some sensitive fields.
-  type testScrub struct {
+// Have a struct with some sensitive fields.
+type testScrub struct {
     Username string
     Password string
     Codes    []string
-  }
+}
 
-  // Create a struct with some sensitive data.
-  T := testScrub{
-     Username: "administrator",
-     Password: "my_secret_passphrase",
-     Codes:    []string{"pass1", "pass2", "pass3"},
-  }
+type fieldScrubOpts struct {
+    maskingSymbol string
+    partScrubConf *PartScrubConf
+}
 
-  // Create empty instance of testScrub
-  emptyT := &testScrub{}
+func newFieldScrubOpts(
+    maskingSymbol string,
+    partScrubConf *PartScrubConf,
+) *fieldScrubOpts {
+    return &fieldScrubOpts{
+        maskingSymbol,
+        partScrubConf,
+    }
+}
 
-  // Create a set of field names to scrub (default is 'password').
-  fieldsToScrub := map[string]map[string]string{
-      "password": make(map[string]string),
-      "codes": make(map[string]string),
-   }
+func (f *fieldScrubOpts) GetMaskingSymbol() string {
+    return f.maskingSymbol
+}
 
-   // Setup scrub options
-   func ScrubSetup() {
-      fieldsToScrub["password"]["symbol"] = "*"
-      fieldsToScrub["codes"]["symbol"] = "."
-      scrub.MaskLenVary = true
-   }
-   ScrubSetup()
+func (f *fieldScrubOpts) PartMaskEnabled() bool {
+    if f.partScrubConf == nil {
+        return false
+    }
 
-  // Call the util API to get a JSON formatted string with scrubbed field values.
-  out := scrub.Scrub(&T, fieldsToScrub)
+    return f.partScrubConf.PartMaskEnabled
+}
 
-  // Log the scrubbed string without worrying about prying eyes!
-  log.Println(out)
-  OUTPUT: {username:administrator Password:******************** Codes:[..... ..... .....]}
+func (f *fieldScrubOpts) PartMaskMinFldLen() int {
+    if f.partScrubConf == nil {
+        return 0
+    }
+
+    return f.partScrubConf.PartMaskMinFldLen
+}
+
+func (f *fieldScrubOpts) PartMaskMaxFldLen() int {
+    if f.partScrubConf == nil {
+        return 0
+    }
+
+    return f.partScrubConf.PartMaskMaxFldLen
+}
+
+func (f *fieldScrubOpts) PartMaskVisibleFrontLen() int {
+    if f.partScrubConf == nil {
+        return 0
+    }
+
+    return f.partScrubConf.visibleFrontLen
+}
+
+func (f *fieldScrubOpts) PartMaskVisibleBackOnlyIfFldLenGreaterThan() int {
+    if f.partScrubConf == nil {
+        return 0
+    }
+
+    return f.partScrubConf.visibleBackOnlyIfFldLenGreaterThan
+}
+
+func (f *fieldScrubOpts) PartMaskVisibleBackLen() int {
+    if f.partScrubConf == nil {
+        return 0
+    }
+
+    return f.partScrubConf.visibleBackLen
+}
+
+// Create a struct with some sensitive data.
+T := &testScrub{
+    Username: "administrator",
+    Password: "my_secret_passphrase",
+    Codes:    []string{"pass1", "pass2", "pass3"},
+}
+
+// Create empty instance of testScrub
+emptyT := &testScrub{}
+
+// Create a set of field names to scrub (default is 'password').
+fieldsToScrub := map[string]FieldScrubOptioner{
+    "password":  newFieldScrubOpts("*", nil),
+    "codes":      newFieldScrubOpts(".", nil),
+}
+
+scrub.MaskLenVary = true
+
+// Call the util API to get a JSON formatted string with scrubbed field values.
+out := scrub.Scrub(emptyT, T, fieldsToScrub, scrub.JSONScrub)
+
+// Log the scrubbed string without worrying about prying eyes!
+log.Println(out)
+// OUTPUT: {username:administrator Password:******************** Codes:[..... ..... .....]}
 ```
 
 - NOTE: Please reffer to `scrub_test.go` for all supported scenarios
