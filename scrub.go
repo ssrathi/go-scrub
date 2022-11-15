@@ -156,6 +156,7 @@ var (
 	MaskLenVary bool = false
 )
 
+// FieldScrubOptioner provides an interface for custom masking field options
 type FieldScrubOptioner interface {
 	GetMaskingSymbol() string
 	PartMaskEnabled() bool
@@ -196,6 +197,7 @@ func (dfo *defaultFieldScrubOpts) PartMaskVisibleBackLen() int {
 	return 0
 }
 
+// PartScrubConf provides options for partitial field masking
 type PartScrubConf struct {
 	PartMaskEnabled                    bool
 	PartMaskMinFldLen                  int
@@ -205,6 +207,7 @@ type PartScrubConf struct {
 	visibleBackLen                     int
 }
 
+// NewPartScrubConf is PartScrubConf constructor
 func NewPartScrubConf(
 	partMaskEnabled bool,
 	partMaskMinFldLen int,
